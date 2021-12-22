@@ -1,0 +1,149 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+generator typegraphql {
+  provider           = "typegraphql-prisma"
+  output             = "../prisma/generated/type-graphql"
+  emitTranspiledCode = true
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Enum_Rol {
+  Estudiante
+  Lider
+  Administrador
+}
+
+enum Enum_EstadoUser {
+  Pendiente
+  Autorizado
+  NoAutorizado
+}
+
+enum Enum_EstadoProyecto {
+  Activo
+  Inactivo
+}
+
+enum Enum_FaseProyecto {
+  Iniciado
+  Desarrollo
+  Terminado
+}
+
+enum Enum_TipoObjetivo {
+  General
+  Especifico
+}
+
+enum Enum_EstadoInscripcion {
+  Aceptada
+  Rechazada
+}
+
+model Account {
+  id                 String  @id @default(cuid())
+  userId             String
+  type               String
+  provider           String
+  providerAccountId  String
+  refresh_token      String?
+  access_token       String?
+  expires_at         Int?
+  token_type         String?
+  scope              String?
+  id_token           String?
+  session_state      String?
+  oauth_token_secret String?
+  oauth_token        String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model User {
+  id                 String          @id @default(cuid())
+  name               String?
+  email              String?         @unique
+  emailVerified      DateTime?
+  image              String?
+  telefono           String?
+  rol                Enum_Rol        @default(Administrador)
+  estado             Enum_EstadoUser @default(Autorizado)
+  proyectosLiderados Proyecto[]
+  avancesCreados     Avance[]
+  inscripciones      Inscripcion[]
+  accounts           Account[]
+  sessions           Session[]
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model Proyecto {
+  id            String              @id @default(cuid())
+  nombre        String
+  descripcion   String              @default("sin descripcion")
+  presupuesto   Float
+  fechaInicio   DateTime
+  fechaFin      DateTime
+  lider         User                @relation(fields: [UserId], references: [id])
+  UserId        String
+  estado        Enum_EstadoProyecto
+  fase          Enum_FaseProyecto
+  objetivos     Objetivo[]
+  avances       Avance[]
+  inscripciones Inscripcion[]
+}
+
+model Objetivo {
+  id          String            @id @default(cuid())
+  descripcion String
+  tipo        Enum_TipoObjetivo
+  proyecto    Proyecto          @relation(fields: [proyectoId], references: [id])
+  proyectoId  String
+}
+
+model Avance {
+  id            String   @id @default(cuid())
+  fecha         DateTime
+  descripcion   String
+  observaciones String
+  proyecto      Proyecto @relation(fields: [proyectoId], references: [id])
+  proyectoId    String
+  creadoPor     User     @relation(fields: [UserId], references: [id])
+  UserId        String
+}
+
+model Inscripcion {
+  id           String                 @id @default(cuid())
+  estado       Enum_EstadoInscripcion
+  fechaIngreso DateTime
+  fechaEgreso  DateTime
+  proyecto     Proyecto               @relation(fields: [proyectoId], references: [id])
+  proyectoId   String
+  estudiante   User                   @relation(fields: [UserId], references: [id])
+  UserId       String
+}
