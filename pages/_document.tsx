@@ -12,7 +12,7 @@ class MyDocument extends Document {
             <Html>
                 <Head />
                 <script async src="https://kit.fontawesome.com/aaf1654110.js" crossOrigin="anonymous"></script>
-                <body style={{backgroundColor:"azure"}}>
+                <body >
                     <Main />
                     <NextScript />
                 </body>
